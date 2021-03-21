@@ -1,0 +1,204 @@
+%% EXEMPLO DA NOTAÇAO SBC E ALGUMAS COISAS DO LATEX %%
+
+\documentclass[12pt]{article}
+% o documentclass[adicionais]{tipo} no adicionais vai
+% o tamanho da fonte e o tipo de papel. o tipo é o tipo de
+% documento.
+% article é para artigo.
+
+% PRE-AMBULO
+
+\usepackage{sbc-template}
+
+\usepackage{graphicx,url}
+\usepackage{float}
+
+%\usepackage{natbib}
+\bibliographystyle{sbc}
+%\bibliographystyle{plainnat}
+%\setcitestyle{numbers, open={[}, close={]}, }
+
+\usepackage[brazil]{babel}   
+\usepackage[utf8]{inputenc}  
+
+\sloppy
+
+\title{Uma análise do modelo CUDA para programação}
+
+\author{Márlon Bento Azevedo, Gabriel Henrique Braz, Cléo de Melo Neto}
+
+\date{Março de 2021}
+
+\address{Pontifícia Universidade Católica de Minas Gerais 
+  (PUCMG)\\
+}
+
+% FIM DO PRE AMBULO
+\begin{document} 
+
+%\begin{titlepage}
+\maketitle
+
+\begin{abstract}
+  This document makes a quick analysis of the CUDA extension and programming model, using concepts studied on the Programming Languages discipline.
+\end{abstract}
+     
+\begin{resumo} 
+  Este documento faz uma rápida análise da extensão e modelo de programação CUDA, usando conceitos estudados na disciplina de Linguagens de Programação.
+\end{resumo}
+
+\begin{center}
+    Link repositório:
+    Link vídeo:
+\end{center}
+
+%\end{titlepage}
+
+\section{Introdução}
+\label{sec:intro}
+Um conceito já utilizado há bastante tempo em Computação é o de Paralelismo, que é dividir uma determinada tarefa em partes menores e resolver cada uma dessas, facilitando a obtenção da solução para determinados problemas. Esse conceito é aplicado na divisão do código de um software em diversas instruções, essas que serão executadas em diferentes blocos de threads e núcleos de um processador.
+
+Nos tempos atuais, observa-se a tendência de que, ao invés de aumentar a potência de um processador, tende-se a aumentar a quantidade de núcleos, favorecendo o paralelismo. Tal tendência é ainda mais notável nas placas gráficas modernas, projetadas com uma quantidade ainda maior de núcleos e threads que CPUs comúns.
+
+É nesse ambiente que foi desenvolvida a CUDA(Compute Unified Device Architecture ou Arquitetura de Dispositivo de Computação Unificada), uma plataforma de computação paralela de propósito geral e modelo de programação, desenvolvida pela nVidia, que possibilita o uso de computação paralela em GPUs NVDIA para resolver problemas computacionais complexos de forma mais eficiente que uma CPU genérica resolveria.
+
+\section{CUDA e GPUs} \label{sec:primeirasecao}
+
+%\begin{figure}[H]
+%\centering
+%\includegraphics[width=.5\textwidth]{gpu.jpg}
+%\label{fig:figura1}
+%\end{figure}
+
+A vantagem do uso de uma GPU para processamento paralelo advém do fato que GPUs tipicamente possuem um número bem maior de núcleos e threads que uma CPU genérica. A figura abaixo ilustra essa diferença:
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=.5\textwidth]{cpuxgpu.png}
+\caption{Comparação entre CPU e GPU. Fonte: \cite{nvidia} }
+\label{fig:figura2}
+\end{figure}
+
+O objetivo de CUDA é estender C/C++ com um conjunto de expressões a mais para executar paralelismo, auxiliando o programador a focar na construção de algoritmos de paralelismo eficientes, ao invés de se preocupar com as nuances de uma linguagem complexa.
+
+O outro objetivo é capacitar a escrita de código escalável que possa ser distribuído em diversos threads concorrentes e diversos núcleos de processamento. Esse ponto é importante pois CUDA é empregada em códigos para comunicação com placas gráficas, com quantidade massiva de núcleos e threads.
+
+O paralelismo físico das placas gráficas NVIDIA atuais vai desde 8 núcleos de processamento e 768 contextos de thread, até 240 núcleos de processamento e 30,720 contextos de thread \cite{CUDAartigo1}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=.5\textwidth]{cudagpu.png}
+\caption{Retirada da documentação CUDA \cite{nvidia}. }
+\label{fig:figura3}
+\end{figure}
+
+\section{CUDA} \label{sec:maincuda}
+A API CUDA, ao ser adicionada a um projeto, acrescenta um conjunto de comandos e um ambiente runtime que juntos consistem em estruturas para alocar e desalocar memória do dispositivo através do host, transferir dados entre o host e o dispositivo e controlar múltiplos dispositivos. 
+Um código escrito contendo extensões CUDA deve ser compilado usando o nvcc, um compilador fornecido pela NVIDIA para essa finalidade. Se o código não for, ele será executado na CPU sem utilizar da GPU.
+
+A extensão CUDA, na prática, adiciona comandos simples e uma definição diferente de método, algumas de suas funções especificas e exemplos de código estão apresentadas nos tópicos a seguir:
+\begin{itemize}
+  \item Chamada de Kernel (\verb|__global__|)
+  \item Device and host 
+  \item Exemplo HELLO, WORLD em C + CUDA 
+  \item Kernel (\verb|<<B, T>> ()|); 
+  \item Funções básicas e utilização (cudaMalloc(), cudaMemcpy(), cudaFree()) 
+\end{itemize}
+\subsection{Utilizando CUDA}
+Como todo inicio em uma nova linguagem, começaremos criando um código de Hello World! Uma observação importante é que o compilador de CUDA interpreta as linguagens C, C++ e Fortran naturalmente, ou seja, podemos compilar um programa de Hello World somente utilizando a linguagem C utilizando compilador CUDA. Porém, se for compilado e executado um código em C puro, mesmo com o compilador de CUDA, ele não será executado na GPU (device), mas será executado na CPU (host), pois para executar em GPU são necessários comandos específicos de CUDA.
+
+Abaixo está um exemplo de um código "Hello World!" escrito em C sem CUDA e outro com CUDA \cite{materialCUDA}.
+\begin{figure}[H]
+\centering
+\includegraphics[width=.4\textwidth]{helloworldC.png}
+\caption{Exemplo em C. }
+\label{fig:figura4}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=.4\textwidth]{helloworldCUDA.png}
+\caption{Exemplo em C com CUDA. }
+\label{fig:figura5}
+\end{figure}
+
+Em CUDA, existe uma chamada especial que é necessária para avisar ao compilador que o método sendo executado deve ser executado na GPU e não na CPU(host); Essa chamada é a do kernel e é indicada pela definição \verb|__global__| antes da definição do método que será passado para a GPU. Essa marcação é para que o compilador (nvcc) saiba que a função é um código para a GPU. Aqui temos um exemplo adaptado de código tipico com CUDA.
+\begin{verbatim}
+__global__ void somaV(uint n, float a, float *x, float *y){
+    uint i = blockIdx.x*blockDim.x + threadIdx.x;
+    //Cada i do kernel pega o que será processado a partir
+    //do inteiro de índice de bloco (blockIdx.x)
+    //do indice interno do bloco(threadIdx.x)
+    //e do número total de threads por bloco (blockDim.x).
+    if( i < n)  y[i] = a*x[i] + y[i];
+}
+void exemplo_serial(){
+    int qtdBlocos, qtdThreadsPorBloco;
+    qtdBlocos = ceil(n/256);
+    qtdThreadsPorBloco = 256;
+    somaV<<<qtdBlocos, qtdThreadsPorBloco>>(n, 2, x, y);
+    // Chamada de função paralela somaV
+}
+\end{verbatim}
+Neste exemplo observamos o uso do paralelismo em CUDA através dos operadores \verb|<<A, B>>|, onde A significa a quantidade de blocos sendo enviados à distribuição e B a quantidade de threads por bloco.
+
+\subsection{Manipulação de Memória do dispositivo em CUDA}
+
+CUDA estende as linguagens com métodos para alocação de memória nos devices sendo manipulados pelo código e para transferência de dados entre host e device:
+\begin{figure}[H]
+\centering
+\includegraphics[width=.5\textwidth]{cudamallocCUDA.png}
+\caption{Exemplo de manipulação de memória em CUDA}
+\label{fig:figura6}
+\end{figure}
+Esta chamada é semelhante ao \verb|malloc()| em C, porém indica ao compilador de CUDA a alocação de memória no device(GPU). Este comando é necessário para alocar espaço na memória para variáveis que serão utilizadas na chamada de kernel (processamento da GPU). Os argumentos desta chamada são um ponteiro para guardar o endereço do novo espaço de memória alocado e o tamanho de memória que se deseja alocar.
+
+Se você se lembra dos comandos para manipulação de memória em C, percebeu que, da mesma forma que é utilizado \verb|free()| para liberar espaço alocado em memória com \verb|malloc()| no C, deve existir uma forma de fazer isso com CUDA. E de fato existe, o \verb|cudaFree()| é o análogo ao \verb|free()| para liberar espaço alocado da memória pelo \verb|cudaMalloc()|.
+
+\subsection{Uso de apontadores com CUDA}
+O método de ponteiros dentro do device funciona da mesma forma que o padrão em C utilizado no host. Utilizando um ponteiro dentro do device, o resultado é armazenado na memória que é apontada. Vamos tomar como exemplo a seguinte expressão executada no device: $*c = a + b$ . São somados os parâmetros ‘a’ e ‘b’ e o resultado é armazenado na memória apontada por ‘c’. Para isso, é necessário passar um ponteiro por parâmetro.
+
+\begin{verbatim}
+    cudaMemcpy(&c,dev_c,sizeof(int),cudaMemcpyDeviceToHost);
+\end{verbatim}
+
+Além disso, podemos acessar a memória utilizando a função \verb|cudaMemcpy()| a partir do código host. Esta função funciona exatamente como \verb|memcpy()| em C padrão. O primeiro parâmetro é a variável a receber a cópia, o segundo é a variável de origem, o terceiro é o tamanho que será copiado e o último, diferente do C , é uma instrução informando a origem dos ponteiros, se do host ou device. No exemplo acima, \verb|cudaMemcpyDeviceToHost| informa que o ponteiro de origem pertence ao device e o que receberá a cópia será do host. O oposto seria \verb|cudaMemcpyHostToDevice|, onde a fonte é no host e o destino é no device.
+
+\section{Aplicações que utilizam CUDA} \label{sec:figs}
+O uso de uma linguagem estendida com CUDA está presente numa variada gama de domínios de aplicação, tendo como foco os problemas que são melhor resolvidos, no sentido de gastar menos tempo e processamento, com o uso da divisão em processos paralelos.
+
+Tais domínios consistem principalmente em análises de dados em Machine Learning, Processamento de Bancos de Dados, Bioinformática, Modelagem Financeira, cálculos de Algebra Linear e Sistemas de Análise Médica \cite{CUDAartigo1}.
+
+Abaixo seguem alguns exemplos:
+\subsection{CUDA na Dinâmica Molecular}
+Dinâmica molecular é o nome dado a uma técnica de simulação frequentemente usada no meio científico de química, biologia e física. A técnica consiste em computar o movimento de um número de átomos, que partem de uma configuração inicial e têm seu movimento registrado em intervalos de tempo. 
+
+Essa é uma ferramenta versátil para calcular propriedades estáticas e dinâmicas de materiais. A própria natureza do problema já supõe que se utilize uma solução de computação paralela. E é nesse contexto que entra o uso do modelo de programação CUDA \cite{CUDAartigo1}.
+
+Leva-se em consideração a soma de forças, agindo sob cada átomo, como uma instrução dividida em uma thread. O uso de GPUs para tal cálculo reduz o tempo de processamento, que seria muito maior se utilizasse um código sequencial em uma CPU.
+\subsection{CUDA nos Jogos Digitais}
+O uso de GPUs como um GPGPUS(General Purpose Graphics Processing Unit) ou seja, para tratar de operações que seriam tratadas pela CPU, se mostrou mais eficiente para cálculos matemáticos mais complexos \cite{tom}.
+
+Os jogos digitais executam esses cálculos para tratar da física nos motores gráficos. O uso de CUDA se torna presente com o objetivo de aumentar a eficiência destes cálculos utilizando o paralelismo.
+\subsection{CUDA em Imagens Sísmicas}
+As imagens sísmicas são utilizadas pela indústria de petróleo para adquirir informações de onde existe óleo e gás. Tipicamente, consistem em diversas unidades de experimentos, gerando grande volume de dados. O processamento em CPU deles, para reconstruir o subsolo, leva cerca de semanas, para mil CPUs, solucionando “sistemas lineares tri-diagonais” de valores complexos.
+
+Esse processo pode ser simplificado ao se  utilizar  um design em CUDA para atribuir  cada sistema linear a uma thread, utilizando o processamento paralelo. O artigo \cite{CUDAartigo1} provê uma figura retratando o aumento de performance ao utilizar clusters de GPU de diferentes tamanhos em comparação com uma única CPU:
+\begin{figure}[H]
+\centering
+\includegraphics[width=.5\textwidth]{example1CUDA.png}
+\caption{Diferenças de Performance}
+\label{fig:figura7}
+\end{figure}
+
+\section{Considerações Finais}
+Como CUDA é implementada sobre uma outra linguagem base, tipicamente C/C++ ou Fortran, ela não gera mudanças na forma de escrever algoritmos, como por exemplo os recursivos, mas apenas possibilita a execução do código de forma paralela e distribuindo-o para threads e núcleos diferentes. Por isso temas como tipos de dados, recursividade e instruções de controle não poderam ser devidamente abordados, por fazer parte da linguagem escolhida pra usar o CUDA.
+
+\section{Conclusão}
+Podemos ver que CUDA é uma ótima adição para programas que se beneficiem da quantidade de núcleos que as GPUS usando programação paralela. Pode ser considerada uma linguagem que proporciona grande poder computacional e, ao mesmo tempo, esconde muitas complexidades que seriam encontradas na transferência de dados entre memórias ou na distribuição e mapeamento dos blocos paralelos entre os núcleos da CPU. 
+
+Sendo assim, CUDA é uma ótima maneira de transformar um código, mesmo que sequencial, em um que pode ser executado de forma paralela, sem muita complicação, resultando em um melhor desempenho se comparado a programas sequênciais executados em uma CPU.
+
+\bibliography{bibliografias}
+
+\end{document}
